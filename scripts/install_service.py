@@ -24,12 +24,17 @@ except ModuleNotFoundError:  # Direct `python3 scripts/install_service.py` execu
 
 
 def run_launchctl(*args: str, check: bool = True) -> None:
-    subprocess.run(["/bin/launchctl", *args], check=check)
+    subprocess.run(
+        ["/bin/launchctl", *args],
+        check=check,
+        stdout=None if check else subprocess.DEVNULL,
+        stderr=None if check else subprocess.DEVNULL,
+    )
 
 
 def bootstrap(domain: str, plist_path: Path) -> Optional[str]:
     error = ""
-    for _attempt in range(10):
+    for _attempt in range(30):
         result = subprocess.run(
             ["/bin/launchctl", "bootstrap", domain, str(plist_path)],
             stdout=subprocess.PIPE,
@@ -39,7 +44,7 @@ def bootstrap(domain: str, plist_path: Path) -> Optional[str]:
         if result.returncode == 0:
             return None
         error = result.stderr.strip()
-        time.sleep(0.2)
+        time.sleep(0.5)
     return error or "unknown launchctl error"
 
 
