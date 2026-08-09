@@ -1,0 +1,12 @@
+App(
+    appid="codex_monitor",
+    name="Codex Monitor",
+    apptype=FlipperAppType.EXTERNAL,
+    entry_point="codex_monitor_app",
+    stack_size=8 * 1024,
+    fap_category="Tools",
+    fap_version="0.9.18",
+    fap_icon="codex_monitor_10px.png",
+    fap_description="USB and BLE Codex quota, usage, task, and link monitor",
+    fap_author="leoliupei",
+)

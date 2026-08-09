@@ -1,0 +1,45 @@
+name: Bug report
+description: Report a reproducible bridge, transport, or FAP problem.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: Do not include prompts, assistant responses, tokens, session IDs, or transcript paths.
+  - type: input
+    id: version
+    attributes:
+      label: Monitor version
+      placeholder: 0.9.18
+    validations:
+      required: true
+  - type: input
+    id: firmware
+    attributes:
+      label: Flipper firmware and FAP API
+      placeholder: Official 1.4.3 / API 87.1
+    validations:
+      required: true
+  - type: dropdown
+    id: transport
+    attributes:
+      label: Transport
+      options:
+        - Bluetooth
+        - USB
+        - Both
+        - Not applicable
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Include exact steps, expected behavior, and sanitized logs.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Checks already tried
