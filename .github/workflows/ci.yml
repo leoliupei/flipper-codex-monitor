@@ -44,6 +44,7 @@ jobs:
       - name: Install the pinned Flipper SDK
         run: >-
           ufbt update
+          --hw-target f7
           --url https://update.flipperzero.one/builds/firmware/1.4.3/flipper-z-f7-sdk-1.4.3.zip
 
       - name: Build the FAP
