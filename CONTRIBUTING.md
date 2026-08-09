@@ -22,6 +22,10 @@ xcrun swiftc -swift-version 5 -O \
 (cd flipper && ufbt)
 ```
 
+Regenerating files under `design/` is optional and requires Python 3.10 or
+newer with `python3 -m pip install -r requirements-design.txt`. Pillow is kept
+out of the bridge and FAP build dependency set.
+
 Contributions are accepted under the repository's MIT License. By submitting a
 pull request, you confirm that you have the right to license your contribution
 on those terms.

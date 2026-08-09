@@ -40,7 +40,8 @@ paths are not forwarded.
 ## Requirements and compatibility
 
 - macOS with Bluetooth Low Energy and Xcode Command Line Tools (`xcrun swiftc`)
-- Python 3.9 or newer
+- Python 3.9 or newer for the bridge, installers, and FAP build
+- Python 3.10 or newer only when regenerating the optional design images
 - a locally installed Codex executable with App Server and Hook support
 - Flipper Zero with a compatible FAP API
 - uFBT 0.2.6 for local FAP builds
@@ -94,6 +95,14 @@ python3 scripts/install_hooks.py
 
 Review and trust the exact commands with `/hooks` in Codex. Installation is
 per-user and does not require root access.
+
+The checked-in screen drafts do not need to be regenerated for installation.
+Contributors working on those images should use Python 3.10 or newer and
+install the isolated design dependency:
+
+```sh
+python3 -m pip install -r requirements-design.txt
+```
 
 ## Transport policy
 

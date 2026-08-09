@@ -13,6 +13,8 @@ Versioning while remaining pre-1.0.
   compilation.
 - Added MIT licensing, security and privacy documentation, installation dry
   runs, precise uninstallers, release metadata checks, and GitHub Actions.
+- Isolated the optional design renderer on the patched Pillow 12.3.0 release;
+  runtime and FAP builds do not install Pillow.
 - Made same-label service reinstallation wait for slow launchd shutdowns and
   verified both legacy-label migration and idempotent reinstall on macOS.
 - Migrated the public LaunchAgent identity to
