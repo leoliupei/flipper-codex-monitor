@@ -1,5 +1,6 @@
 import unittest
 from datetime import date, datetime, time, timezone
+from unittest import mock
 
 from codex_flipper_monitor.model import (
     QuotaSnapshot,
@@ -47,13 +48,17 @@ class MonitorStateTests(unittest.TestCase):
             )
         )
         state.handle_hook("start", "private-turn-id", now=0, timestamp=50)
-        command = encode_cli_command(state, health_flags=3)
+        with mock.patch(
+            "codex_flipper_monitor.protocol._utc_offset_seconds",
+            return_value=8 * 60 * 60,
+        ):
+            command = encode_cli_command(state, health_flags=3)
         self.assertEqual(
             command.split(" z=", 1)[0],
             "codexmon v=2 q=5 d=10080 r=1786160715 h=11 m=45 c=1 s=W n=1 p=P "
             "a=50 l=0 f=0 t=100",
         )
-        self.assertRegex(command, r" z=-?\d+ e=3\r$")
+        self.assertTrue(command.endswith(" z=28800 e=3\r"))
         self.assertNotIn("private-turn-id", command)
 
     def test_usage_protocol_is_fixed_width_private_and_ble_safe(self) -> None:

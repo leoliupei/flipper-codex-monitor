@@ -22,6 +22,7 @@ def _utc_offset_seconds() -> int:
 
 
 def encode_cli_command(state: MonitorState, health_flags: int = 0) -> str:
+    utc_offset_seconds = _utc_offset_seconds()
     quota = state.quota
     if quota is None:
         remaining = -1
@@ -37,7 +38,9 @@ def encode_cli_command(state: MonitorState, health_flags: int = 0) -> str:
         duration = window.duration_minutes or 0
         resets_at = window.resets_at or 0
         if resets_at:
-            reset_local = datetime.fromtimestamp(resets_at)
+            reset_local = datetime.fromtimestamp(
+                resets_at, tz=timezone.utc
+            ) + timedelta(seconds=utc_offset_seconds)
             reset_hour = reset_local.hour
             reset_minute = reset_local.minute
         else:
@@ -62,7 +65,7 @@ def encode_cli_command(state: MonitorState, health_flags: int = 0) -> str:
             state.last_completed_at,
             max(0, min(0x7FFFFFFF, int(state.completion_sequence))),
             quota.fetched_at if quota is not None else 0,
-            _utc_offset_seconds(),
+            utc_offset_seconds,
             max(0, min(3, int(health_flags))),
         )
     )
