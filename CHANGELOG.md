@@ -3,6 +3,15 @@
 All notable changes are documented here. The project follows Semantic
 Versioning while remaining pre-1.0.
 
+## Unreleased
+
+- Aligned Codex App Server client metadata with the bridge release version and
+  added regression coverage on Python 3.9 and 3.12.
+- Pinned the local Flipper SDK setup, documented first-run Hook reload and
+  troubleshooting, and disabled privacy-bypassing blank issue forms.
+- Added a metadata-free real-device photo and changed the license attribution
+  to the maintainer's GitHub username.
+
 ## 0.9.18 - 2026-08-10
 
 - Added the two-second `DONE` check-mark animation.

@@ -14,6 +14,9 @@ concurrency:
 jobs:
   validate:
     runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.12"]
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -21,7 +24,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
           cache: pip
           cache-dependency-path: requirements-dev.txt
 
@@ -35,6 +38,7 @@ jobs:
         run: python scripts/check_release.py
 
       - name: Compile the native Bluetooth helper
+        if: matrix.python-version == '3.12'
         run: |
           xcrun swiftc -swift-version 5 -O \
             -framework Foundation -framework CoreBluetooth \
@@ -42,16 +46,19 @@ jobs:
             -o /tmp/codex-flipper-ble
 
       - name: Install the pinned Flipper SDK
+        if: matrix.python-version == '3.12'
         run: >-
           ufbt update
           --hw-target f7
           --url https://update.flipperzero.one/builds/firmware/1.4.3/flipper-z-f7-sdk-1.4.3.zip
 
       - name: Build the FAP
+        if: matrix.python-version == '3.12'
         working-directory: flipper
         run: ufbt
 
       - name: Upload the FAP build
+        if: matrix.python-version == '3.12'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: codex-monitor-fap
