@@ -129,6 +129,7 @@ def main() -> int:
     os.replace(temporary, hooks_file)
     print("Installed Hooks: %s" % hooks_file)
     print("Review and trust the two new command hooks with /hooks before testing.")
+    print("Then fully quit and reopen ChatGPT/Codex before starting a new test task.")
     return 0
 
 

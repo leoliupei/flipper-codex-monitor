@@ -11,7 +11,7 @@ Energy as the primary transport and USB as the fallback.
 > and marks remain the property of OpenAI; see
 > [Third-party notices](THIRD_PARTY_NOTICES.md).
 
-![Flipper Codex Monitor home screen](design/homepage-v3-preview-8x.png)
+![Flipper Zero running Flipper Codex Monitor over BLE](docs/images/flipper-codex-monitor.jpg)
 
 The project is pre-1.0. Its local Codex integration follows interfaces shipped
 with Codex, including App Server messages and Hook metadata, but those
@@ -51,6 +51,15 @@ Version 0.9.18 is built against the official Flipper firmware 1.4.3 SDK, target
 the same API. FAP compatibility is determined by the API metadata rather than
 the firmware brand.
 
+The current beta has been exercised in these environments; these are tested
+combinations, not minimum-version promises:
+
+| Path | Tested environment |
+| --- | --- |
+| Local end to end | macOS 26.6.1 arm64, Python 3.9.6, Codex CLI 0.144.1, Apple Swift 6.3.3 |
+| Continuous integration | GitHub-hosted `macos-latest`, Python 3.9 and 3.12 |
+| Flipper | Official firmware 1.4.3 SDK / API 87.1; Momentum `mntm-012` |
+
 ## Quick start
 
 Clone the repository and prepare uFBT:
@@ -60,7 +69,9 @@ git clone https://github.com/leoliupei/flipper-codex-monitor.git
 cd flipper-codex-monitor
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements-dev.txt
-(cd flipper && ../.venv/bin/ufbt update --channel release)
+(cd flipper && ../.venv/bin/ufbt update \
+  --hw-target f7 \
+  --url https://update.flipperzero.one/builds/firmware/1.4.3/flipper-z-f7-sdk-1.4.3.zip)
 ```
 
 Build and install the FAP while the Flipper is connected over USB:
@@ -93,8 +104,12 @@ python3 scripts/install_hooks.py --dry-run
 python3 scripts/install_hooks.py
 ```
 
-Review and trust the exact commands with `/hooks` in Codex. Installation is
-per-user and does not require root access.
+Review and trust the exact commands with `/hooks` in Codex. After the first
+installation or any Hook change, fully quit and reopen ChatGPT/Codex, then
+start a new task so the running app reloads the configuration. Installation is
+per-user and does not require root access. See the official
+[Codex Hooks documentation](https://learn.chatgpt.com/docs/hooks) for the trust
+model and supported events.
 
 The checked-in screen drafts do not need to be regenerated for installation.
 Contributors working on those images should use Python 3.10 or newer and
@@ -322,6 +337,25 @@ The service installer uses the public LaunchAgent label
 `io.github.leoliupei.flipper-codex-monitor`. It recognizes and removes the
 legacy `com.liupei.codex-flipper-monitor` LaunchAgent only after the replacement
 service starts successfully.
+
+## Troubleshooting
+
+If a new Codex task produces no response on the Flipper, check the path in this
+order:
+
+1. Keep the FAP open; it advertises the monitor BLE profile only while running.
+2. Open `/hooks`, verify both installed commands are trusted, then fully quit
+   and reopen ChatGPT/Codex before starting a fresh task.
+3. Check the LaunchAgent with
+   `launchctl print gui/$(id -u)/io.github.leoliupei.flipper-codex-monitor`.
+4. Inspect `transport` and `error` in
+   `~/Library/Application Support/CodexFlipperMonitor/state.json`. A null
+   transport with a `transport:` error means neither BLE nor USB acknowledged
+   the latest update.
+
+`NO NAME` means the Codex thread does not yet have a user-facing title; it is
+not evidence of a BLE failure. Do not purge the entire runtime state merely to
+remove that label.
 
 ## Privacy, security, and license
 

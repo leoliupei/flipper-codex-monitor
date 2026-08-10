@@ -5,6 +5,8 @@ import threading
 import time
 from typing import Any, Dict, Optional
 
+from . import __version__
+
 
 class CodexProtocolError(RuntimeError):
     pass
@@ -52,7 +54,7 @@ class CodexAppServer:
                 "clientInfo": {
                     "name": "flipper-codex-monitor",
                     "title": "Flipper Codex Monitor",
-                    "version": "0.2.0",
+                    "version": __version__,
                 },
                 "capabilities": {
                     "experimentalApi": True,
