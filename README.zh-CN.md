@@ -30,7 +30,7 @@
 - Flipper Zero，且 FAP API 兼容
 - 本地构建 FAP 使用 uFBT 0.2.6
 
-版本 0.9.18 使用 Flipper 官方固件 1.4.3 SDK、target 7、FAP API 87.1 构建。项目也已在暴露相同 API 的 Momentum `mntm-012` 上完成测试。FAP 兼容性由 API 元数据决定，而不是由固件品牌决定。
+版本 0.9.19 使用 Flipper 官方固件 1.4.3 SDK、target 7、FAP API 87.1 构建。项目也已在暴露相同 API 的 Momentum `mntm-012` 上完成测试。FAP 兼容性由 API 元数据决定，而不是由固件品牌决定。
 
 当前 beta 已在以下环境中验证；这些是实际测试过的组合，不代表最低版本承诺：
 
@@ -75,14 +75,14 @@ python3 scripts/install_service.py \
   --ble-name DEVICE
 ```
 
-最后，预览并安装两个经过隐私最小化处理的 Codex Hooks：
+最后，预览并安装四个经过隐私最小化处理的 Codex Hooks：
 
 ```sh
 python3 scripts/install_hooks.py --dry-run
 python3 scripts/install_hooks.py
 ```
 
-在 Codex 中通过 `/hooks` 检查并信任这两条具体命令。首次安装或任何 Hook 发生变化后，需要完全退出并重新打开 ChatGPT/Codex，再启动一个新任务，使正在运行的应用重新加载配置。安装仅作用于当前用户，不需要 root 权限。信任模型和支持的事件类型请参阅官方 [Codex Hooks 文档](https://learn.chatgpt.com/docs/hooks)。
+在 Codex 中通过 `/hooks` 检查并信任这四条具体命令。首次安装或任何 Hook 发生变化后，需要完全退出并重新打开 ChatGPT/Codex，再启动一个新任务，使正在运行的应用重新加载配置。安装仅作用于当前用户，不需要 root 权限。信任模型和支持的事件类型请参阅官方 [Codex Hooks 文档](https://learn.chatgpt.com/docs/hooks)。
 
 安装项目不需要重新生成仓库中已有的屏幕设计图。需要修改这些图片的贡献者应使用 Python 3.10 或更高版本，并单独安装设计依赖：
 
@@ -102,7 +102,7 @@ python3 -m pip install -r requirements-design.txt
 
 ## 状态模型
 
-- `WORKING`：至少有一个 `UserPromptSubmit` Turn 正在进行。
+- `WORKING`：至少有一个 `UserPromptSubmit` Turn 或 Side 对话正在进行。
 - `DONE`：最后一个活跃 Turn 已完成、失败或被手动停止，会短暂显示。这个全局显示状态本身不会触发通知。
 - `IDLE`：完成状态保持期结束后，没有活跃 Turn。
 
@@ -110,7 +110,7 @@ python3 -m pip install -r requirements-design.txt
 
 App Server 协议目前通过服务端到客户端的 `thread/tokenUsage/updated` 通知暴露每个任务的实时 Token 用量。通知包含 Thread 和 Turn ID、累计和最近一次调用的用量、模型上下文窗口，以及输入、缓存输入、缓存写入输入、输出和推理输出 Token 的明细。通知只属于拥有该 Thread 的 App Server 连接；Bridge 用于读取账户数据的独立连接无法收到 Codex Desktop 活跃任务的数据流。因此，Bridge 在本地使用 Hook 提供的 `session_id` 和 `transcript_path`，只跟踪 `token_count` 记录，并将其转换为相同的任务指标。Codex 将转录文件内容定义为不稳定的 Hook 接口，所以解析采用 fail-soft 策略：即使已安装的 Codex 版本改变了本地记录格式，任务状态仍能继续工作，FAP 会显示 `TOKENS WAITING`。如果 Hook 没有提供 `transcript_path`，Bridge 会通过 `thread/read` 查询该 Thread 的存储路径，并在打开文件前应用同样的允许列表。
 
-Codex Hook 回调本身包含的字段多于监视器实际所需。常见字段包括 `session_id`、`transcript_path`、`cwd` 和 `model`；`UserPromptSubmit` 还包含 `turn_id` 和 `prompt`，`Stop` 则可能包含助手的最终回复。Hook 适配器有意只允许事件类型、本地 Session/Turn 关联信息和转录文件路径进入 Bridge 处理流程。原始提示词、回复、模型和工作目录会在进入本地 Socket 前被丢弃；发送到 Flipper 的只有派生出的七字符任务名称。
+Codex Hook 回调本身包含的字段多于监视器实际所需。常见字段包括 `session_id`、`transcript_path`、`cwd` 和 `model`；`UserPromptSubmit` 还包含 `turn_id` 和 `prompt`，`Stop` 则可能包含助手的最终回复。`SubagentStart` 和 `SubagentStop` 还会提供唯一的 `agent_id`；仅靠父 Session ID 无法区分并发的 Side 对话。Hook 适配器有意只允许事件类型、本地任务关联信息、根任务转录路径和 Side 标记进入 Bridge 处理流程。原始提示词、回复、模型、工作目录、Agent 类型和 Side 转录路径会在进入本地 Socket 前被丢弃；发送到 Flipper 的只有派生出的七字符任务名称。
 
 ## 屏幕
 
@@ -144,7 +144,7 @@ Codex Hook 回调本身包含的字段多于监视器实际所需。常见字段
 
 Quota 页面显示准确的剩余百分比、重置倒计时、重置日期和时间、可用重置次数，以及上次配额刷新时间。传输的 Unix 时间戳统一保持 UTC；Bridge 还会发送 Mac 的 UTC 偏移量，因此刷新时间、任务开始时间、运行时长和重置倒计时都能与 Flipper 本地时钟保持一致。
 
-Tasks 是一个可垂直滚动的列表，保留最近活跃的 16 个运行中或已完成本地 Session；屏幕一次显示三行，但列表并不只限于这三行。条目只按最近活动时间排序。每行显示派生出的短名称、完整状态单词和本地开始时间。选中行使用纯黑背景和白色文字，不显示箭头。上下键滚动，OK 打开所选任务。已完成条目不会按时间过期；只有第 17 个任务到来时，最久未活跃的已完成条目才会离开列表。服务重启后，会从 Mac 本地权限为 `0600` 的运行状态文件恢复这 16 条历史记录。临时 Side 对话显示为 `SIDE`，不能从任务列表打开，并会在结束后立即删除。如果某个 `SIDE` 条目没有转录或 Token 活动，且结束事件一直没有到达，30 秒后会被丢弃，避免监视器一直停留在 `WORKING`。选中 Side 对话时，底部显示 `NO DETAILS`，详情页的任务切换也会跳过 Side 对话。
+Tasks 是一个可垂直滚动的列表，保留最近活跃的 16 个运行中或已完成本地 Session；屏幕一次显示三行，但列表并不只限于这三行。条目只按最近活动时间排序。每行显示派生出的短名称、完整状态单词和本地开始时间。选中行使用纯黑背景和白色文字，不显示箭头。任务超过三个时，右侧细滚动条会标出当前三行在完整列表中的位置，底部则显示当前选中行从 1 开始计算的位置。上下键滚动，OK 打开所选任务。已完成条目不会按时间过期；只有第 17 个任务到来时，最久未活跃的已完成条目才会离开列表。服务重启后，会从 Mac 本地权限为 `0600` 的运行状态文件恢复这 16 条历史记录。临时 Side 对话显示为 `SIDE`，不能从任务列表打开，会在完整生命周期内保持可见，并在对应的 `SubagentStop` 到达后立即删除。选中 Side 对话时，底部显示 `NO DETAILS`，详情页的任务切换也会跳过 Side 对话。
 
 任务详情页包含两个视图：Live 显示状态、运行时长、总 Token、最近一次调用 Token、最近一次调用的上下文占用率，以及用完整 `SECOND` 或 `SECONDS` 单位表示的更新时间；Tokens 显示累计输入、缓存输入、输出和推理输出数量。在详情页中，上下键切换任务，OK 在 Live 和 Tokens 之间切换，左右键不执行操作，Back 返回 Tasks 列表。Link 页面显示当前 USB 或蓝牙传输方式、Codex 连接状态、两种物理链路的状态，以及当前传输方式已保持连接的时长。
 
@@ -172,7 +172,7 @@ xcrun swiftc -swift-version 5 -O \
 
 ## 卸载
 
-只删除本项目安装的两个 Codex Hooks，保留其他所有 Hook 处理器：
+只删除本项目安装的四个 Codex Hooks，保留其他所有 Hook 处理器：
 
 ```sh
 python3 scripts/uninstall_hooks.py --dry-run
@@ -201,7 +201,7 @@ python3 scripts/uninstall_service.py
 如果新 Codex 任务没有让 Flipper 产生响应，请按以下顺序检查：
 
 1. 保持 FAP 打开；只有 FAP 运行时才会广播监视器 BLE Profile。
-2. 打开 `/hooks`，确认两条已安装命令都被信任；然后完全退出并重新打开 ChatGPT/Codex，再启动一个新任务。
+2. 打开 `/hooks`，确认四条已安装命令都被信任；然后完全退出并重新打开 ChatGPT/Codex，再启动一个新任务。
 3. 使用 `launchctl print gui/$(id -u)/io.github.leoliupei.flipper-codex-monitor` 检查 LaunchAgent。
 4. 检查 `~/Library/Application Support/CodexFlipperMonitor/state.json` 中的 `transport` 和 `error`。如果 `transport` 为 null，同时 `error` 中包含 `transport:`，说明 BLE 和 USB 都没有确认最近一次更新。
 

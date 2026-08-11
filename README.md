@@ -19,7 +19,7 @@ The project is pre-1.0. Its local Codex integration follows interfaces shipped
 with Codex, including App Server messages and Hook metadata, but those
 interfaces can change between Codex releases.
 
-The project has two parts:
+The project has two main parts plus a native helper:
 
 - `bridge/`: a macOS service that reads the local Codex App Server interface,
   receives privacy-minimized Codex Hook events, and sends compact updates over
@@ -48,7 +48,7 @@ paths are not forwarded.
 - Flipper Zero with a compatible FAP API
 - uFBT 0.2.6 for local FAP builds
 
-Version 0.9.18 is built against the official Flipper firmware 1.4.3 SDK, target
+Version 0.9.19 is built against the official Flipper firmware 1.4.3 SDK, target
 7, FAP API 87.1. It has also been tested on Momentum `mntm-012`, which exposes
 the same API. FAP compatibility is determined by the API metadata rather than
 the firmware brand.
@@ -253,8 +253,11 @@ Tasks is a vertically scrollable list of the 16 most recently active working or
 completed local sessions; three rows fit on screen, but the list is not limited
 to those three visible rows. Rows sort only by latest activity. Each row shows a
 derived short label, full-word state, and local start time. The selected row
-uses a solid black background with white text and no arrow. Up and Down scroll,
-and OK opens the selected task. Completed entries have no time-based expiry;
+uses a solid black background with white text and no arrow. With more than
+three tasks, a slim right-edge scrollbar shows the current three-row window,
+and the footer reports the selected row's current one-based position. Up and
+Down scroll, and OK opens the selected task. Completed entries have no
+time-based expiry;
 the least recently active completed entry leaves only when a seventeenth task
 arrives. The sixteen-entry history is restored from the Mac-local mode-`0600`
 runtime state after service restarts. Temporary side conversations are shown as

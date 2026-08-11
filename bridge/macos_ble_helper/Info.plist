@@ -15,9 +15,9 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-	<string>0.9.18</string>
+	<string>0.9.19</string>
     <key>CFBundleVersion</key>
-	<string>918</string>
+	<string>919</string>
     <key>LSBackgroundOnly</key>
     <true/>
     <key>NSBluetoothAlwaysUsageDescription</key>
