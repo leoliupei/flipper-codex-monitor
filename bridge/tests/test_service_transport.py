@@ -32,6 +32,19 @@ class MissingSideThread:
         raise RuntimeError("thread not loaded: temporary-side-thread")
 
 
+class UnexpectedThreadRead:
+    def read_thread(self, _session_id: str):
+        raise AssertionError("explicit side events must not read a parent thread")
+
+
+class FakeHookSocket:
+    def __init__(self, payload) -> None:
+        self.payload = payload
+
+    def recv(self, _size: int) -> bytes:
+        return json.dumps(self.payload).encode("utf-8")
+
+
 class ServiceTransportTransitionTests(unittest.TestCase):
     def test_prepare_runtime_does_not_restore_stale_working_state(self) -> None:
         with tempfile.TemporaryDirectory() as runtime_dir:
@@ -102,6 +115,43 @@ class ServiceTransportTransitionTests(unittest.TestCase):
             self.assertEqual(label, "SIDE")
             self.assertIsNone(transcript_path)
             self.assertTrue(is_side)
+
+    def test_explicit_side_lifecycle_skips_thread_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as runtime_dir:
+            service = MonitorService(
+                "/usr/bin/true", runtime_dir, sink=FakeTransport()
+            )
+            service._prepare_runtime()
+            service.codex = UnexpectedThreadRead()
+            service._socket = FakeHookSocket(
+                {
+                    "event": "start",
+                    "turnId": "agent-1",
+                    "sessionId": "agent-1",
+                    "isSide": True,
+                }
+            )
+
+            service._receive_hook()
+
+            task = service.state.task_for_session("agent-1")
+            self.assertIsNotNone(task)
+            self.assertEqual(task.label, "SIDE")
+            self.assertTrue(task.is_side)
+            self.assertNotIn("agent-1", service._pending_task_metadata)
+
+            service._socket = FakeHookSocket(
+                {
+                    "event": "stop",
+                    "turnId": "agent-1",
+                    "sessionId": "agent-1",
+                    "isSide": True,
+                }
+            )
+            service._receive_hook()
+
+            self.assertIsNone(service.state.task_for_session("agent-1"))
+            self.assertEqual(service.state.completion_sequence, 1)
 
     def test_publish_persists_private_task_identity_locally(self) -> None:
         with tempfile.TemporaryDirectory() as runtime_dir:

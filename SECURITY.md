@@ -40,6 +40,6 @@ window for validation and a coordinated fix before public disclosure.
 ## Installation review
 
 The installer writes a per-user LaunchAgent, a private application-support
-directory, and two optional Codex command hooks. Run each installer with
+directory, and four optional Codex command hooks. Run each installer with
 `--dry-run` first and review the exact paths before applying it. Root access is
 not required.

@@ -16,8 +16,19 @@ def default_socket_path() -> str:
     return os.path.join(runtime, "reporter.sock")
 
 
-def sanitize_event(payload: Dict[str, Any]) -> Optional[Dict[str, str]]:
+def sanitize_event(payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     name = payload.get("hook_event_name")
+    if name in ("SubagentStart", "SubagentStop"):
+        agent_id = payload.get("agent_id")
+        if not isinstance(agent_id, str) or not agent_id or len(agent_id) > 256:
+            return None
+        return {
+            "event": "start" if name == "SubagentStart" else "stop",
+            "turnId": agent_id,
+            "sessionId": agent_id,
+            "isSide": True,
+        }
+
     turn_id = payload.get("turn_id")
     if name == "UserPromptSubmit":
         event = "start"
@@ -41,7 +52,7 @@ def sanitize_event(payload: Dict[str, Any]) -> Optional[Dict[str, str]]:
     return result
 
 
-def deliver(event: Dict[str, str], socket_path: Optional[str] = None) -> None:
+def deliver(event: Dict[str, Any], socket_path: Optional[str] = None) -> None:
     data = json.dumps(event, separators=(",", ":")).encode("utf-8")
     target = socket_path or default_socket_path()
     client = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)

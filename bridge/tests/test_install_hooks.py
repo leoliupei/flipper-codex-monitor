@@ -25,6 +25,19 @@ class InstallHooksTests(unittest.TestCase):
             merged["hooks"]["Stop"][0]["hooks"][0]["command"],
             "/usr/bin/existing",
         )
+        for event in (
+            "UserPromptSubmit",
+            "Stop",
+            "SubagentStart",
+            "SubagentStop",
+        ):
+            self.assertTrue(
+                any(
+                    handler.get("command") == "/usr/bin/monitor"
+                    for group in merged["hooks"][event]
+                    for handler in group.get("hooks", [])
+                )
+            )
         again, changed_again = merge_hook_config(merged, "/usr/bin/monitor")
         self.assertFalse(changed_again)
         self.assertIs(again, merged)
@@ -45,6 +58,12 @@ class InstallHooksTests(unittest.TestCase):
                 "UserPromptSubmit": [
                     {"hooks": [{"type": "command", "command": command}]}
                 ],
+                "SubagentStart": [
+                    {"hooks": [{"type": "command", "command": command}]}
+                ],
+                "SubagentStop": [
+                    {"hooks": [{"type": "command", "command": command}]}
+                ],
             },
         }
         updated, changed = remove_hook_config(config, command)
@@ -55,6 +74,8 @@ class InstallHooksTests(unittest.TestCase):
             [{"type": "command", "command": "/usr/bin/existing"}],
         )
         self.assertNotIn("UserPromptSubmit", updated["hooks"])
+        self.assertNotIn("SubagentStart", updated["hooks"])
+        self.assertNotIn("SubagentStop", updated["hooks"])
 
         again, changed_again = remove_hook_config(updated, command)
         self.assertFalse(changed_again)

@@ -5,6 +5,9 @@ Versioning while remaining pre-1.0.
 
 ## Unreleased
 
+- Track side conversations with the official `SubagentStart` and
+  `SubagentStop` lifecycle, preserving concurrent and long-running side tasks
+  until each one finishes.
 - Aligned Codex App Server client metadata with the bridge release version and
   added regression coverage on Python 3.9 and 3.12.
 - Pinned the local Flipper SDK setup, documented first-run Hook reload and

@@ -75,8 +75,6 @@ class MonitorService:
                     task_changed = self._poll_task_usage()
                     if task_changed:
                         self._publish()
-                if self.state.expire_stale_side_tasks():
-                    self._publish()
                 if self.state.advance(now):
                     self._publish()
                 for key, _ in selector.select(timeout=0.5):
@@ -274,6 +272,7 @@ class MonitorService:
         turn_id = payload.get("turnId")
         session_id = payload.get("sessionId")
         transcript_path = safe_codex_transcript_path(payload.get("transcriptPath"))
+        explicit_side = payload.get("isSide") is True
         if event not in ("start", "stop") or not isinstance(turn_id, str):
             return
         if not isinstance(session_id, str) or not session_id:
@@ -283,11 +282,18 @@ class MonitorService:
         label = None
         is_side: Optional[bool] = None
         if event == "start":
-            label, discovered_path, is_side = self._resolve_task_metadata(session_id)
-            if transcript_path is None:
-                transcript_path = discovered_path
-            if transcript_path is not None:
-                is_side = False
+            if explicit_side:
+                label = "SIDE"
+                is_side = True
+                transcript_path = None
+            else:
+                label, discovered_path, is_side = self._resolve_task_metadata(
+                    session_id
+                )
+                if transcript_path is None:
+                    transcript_path = discovered_path
+                if transcript_path is not None:
+                    is_side = False
         self.state.handle_hook(
             event,
             turn_id,
@@ -296,13 +302,14 @@ class MonitorService:
             label=label,
             is_side=is_side,
         )
-        if event == "start" and transcript_path is not None:
-            self._task_readers[session_id] = TranscriptTokenReader(transcript_path)
-            self._poll_task_usage(session_id)
-            if label == "NO_NAME":
+        if event == "start" and not explicit_side:
+            if transcript_path is not None:
+                self._task_readers[session_id] = TranscriptTokenReader(
+                    transcript_path
+                )
+                self._poll_task_usage(session_id)
+            if label == "NO_NAME" or transcript_path is None:
                 self._pending_task_metadata.add(session_id)
-        elif event == "start":
-            self._pending_task_metadata.add(session_id)
         elif event == "stop":
             self._task_readers.pop(session_id, None)
             self._pending_task_metadata.discard(session_id)
