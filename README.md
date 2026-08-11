@@ -39,6 +39,33 @@ unnamed thread displays `NO NAME`. Prompt text, assistant output, working
 directories, account identifiers, raw session/turn identifiers, and transcript
 paths are not forwarded.
 
+## Screen tour
+
+The device photo above shows the Home page running on real hardware in the
+`IDLE` state over BLE. The enlarged previews below show representative 128x64
+pixel layouts; display contrast and backlight appearance should be judged from
+the Flipper itself.
+
+### Home
+
+![Home page showing quota pace and active Codex work](design/homepage-v3-preview-8x.png)
+
+Home is the at-a-glance dashboard and navigation hub. The header shows the
+active transport and Flipper battery. The left panel shows weekly quota
+remaining, a pace needle, and a progress bar; the right panel shows
+`WORKING`, `DONE`, `IDLE`, or `OFFLINE` together with the active task count.
+The bottom row shows the reset countdown and available reset count. From Home,
+Left opens Quota, Down opens Usage, Right opens Tasks, and Up opens Link.
+
+| Page | What it shows |
+| --- | --- |
+| ![Quota page](design/quota-v1-preview-8x.png) | **Quota** — exact remaining percentage, reset countdown and date, available resets, and the latest quota refresh time. |
+| ![Daily usage page](design/usage-v1-preview-8x.png) | **Usage** — daily token history with 7-, 14-, and 30-day ranges. Up and Down also switch to four-week and lifetime summaries. |
+| ![Tasks list page](design/tasks-overview-v3-preview-8x.png) | **Tasks** — up to 16 recent local tasks ordered by activity, with state and start time. The right-edge scrollbar and `TASK N OF M` footer show the current position. |
+| ![Live task detail page](design/task-live-v3-preview-8x.png) | **Task Live** — current state and elapsed time, total and latest-call tokens, context-window use, and token-data freshness. |
+| ![Task token breakdown page](design/task-tokens-v3-preview-8x.png) | **Task Tokens** — cumulative input, cached-input, output, and reasoning-output counts. Press OK in task details to toggle between Live and Tokens. |
+| ![Link status page](design/link-v1-preview-8x.png) | **Link** — selected transport, Codex connectivity, USB and Bluetooth state, and how long the active link has remained connected. |
+
 ## Requirements and compatibility
 
 - macOS with Bluetooth Low Energy and Xcode Command Line Tools (`xcrun swiftc`)
