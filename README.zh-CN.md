@@ -21,6 +21,25 @@
 
 通过所选本地链路传输的数据仅包括：配额字段、聚合用量统计、每日 Token 总量、活动状态、本地任务编号、短显示名称、Token 计数、上下文窗口大小、活跃 Turn 数量和时间戳。任务名称只取自面向用户的任务名称，并限制为七个字符。中文名称会在 Mac 上转换成拼音首字母；尚未命名的任务显示为 `NO NAME`。提示词、助手回复、工作目录、账户标识、原始 Session/Turn 标识以及转录文件路径都不会发送到 Flipper。
 
+## 页面一览
+
+上方实机照片展示了通过 BLE 连接、处于 `IDLE` 状态的首页。下面的放大图用于展示有代表性的 128×64 像素布局；屏幕对比度和背光效果仍以 Flipper 实机为准。
+
+### 首页
+
+![显示配额节奏与 Codex 活动状态的首页](design/homepage-v3-preview-8x.png)
+
+首页既是信息总览，也是页面导航中心。顶栏显示当前传输方式和 Flipper 电量；左侧显示每周剩余配额、使用节奏指针和进度条；右侧显示 `WORKING`、`DONE`、`IDLE` 或 `OFFLINE`，以及当前活跃任务数；底部显示重置倒计时和可用重置次数。在首页按左键进入 Quota，按下键进入 Usage，按右键进入 Tasks，按上键进入 Link。
+
+| 页面 | 显示内容 |
+| --- | --- |
+| ![配额页面](design/quota-v1-preview-8x.png) | **Quota（配额）**：准确的剩余百分比、重置倒计时和日期、可用重置次数，以及最近一次配额刷新时间。 |
+| ![每日用量页面](design/usage-v1-preview-8x.png) | **Usage（用量）**：每日 Token 变化，可切换 7、14 和 30 天范围；按上下键还可查看最近四周和历史累计汇总。 |
+| ![任务列表页面](design/tasks-overview-v3-preview-8x.png) | **Tasks（任务）**：按最近活动时间排列最多 16 个本地任务，显示状态和开始时间；右侧滚动条及底部 `TASK N OF M` 表示当前位置。 |
+| ![任务实时详情页面](design/task-live-v3-preview-8x.png) | **Task Live（实时详情）**：当前状态和运行时长、总 Token、最近一次调用 Token、上下文占用率，以及 Token 数据更新时间。 |
+| ![任务 Token 明细页面](design/task-tokens-v3-preview-8x.png) | **Task Tokens（Token 明细）**：累计输入、缓存输入、输出和推理输出数量；在任务详情中按 OK 可在 Live 和 Tokens 之间切换。 |
+| ![连接状态页面](design/link-v1-preview-8x.png) | **Link（连接）**：当前传输方式、Codex 连接状态、USB 与蓝牙状态，以及当前链路的持续连接时间。 |
+
 ## 环境要求与兼容性
 
 - 支持低功耗蓝牙并安装 Xcode Command Line Tools（`xcrun swiftc`）的 macOS
