@@ -64,6 +64,9 @@ typedef enum {
 #define CODEX_USAGE_DAYS             30
 #define CODEX_TASK_SLOTS              16
 #define CODEX_TASK_LABEL_MAX          7
+#define CODEX_TASK_VISIBLE_ROWS        3
+#define CODEX_TASK_SCROLL_TOP         22
+#define CODEX_TASK_SCROLL_HEIGHT      29
 
 typedef struct {
     uint16_t size;
@@ -1177,6 +1180,29 @@ static void codex_monitor_draw_token_value(
         codex_compact_draw(canvas, x, y + 1, align, text);
 }
 
+static void codex_monitor_draw_task_scrollbar(
+    Canvas* canvas,
+    uint8_t task_count,
+    uint8_t first_task) {
+    if(task_count <= CODEX_TASK_VISIBLE_ROWS) return;
+
+    uint8_t thumb_height =
+        (CODEX_TASK_SCROLL_HEIGHT * CODEX_TASK_VISIBLE_ROWS) / task_count;
+    if(thumb_height < 4) thumb_height = 4;
+    uint8_t max_first = task_count - CODEX_TASK_VISIBLE_ROWS;
+    uint8_t thumb_travel = CODEX_TASK_SCROLL_HEIGHT - thumb_height;
+    uint8_t thumb_top = CODEX_TASK_SCROLL_TOP +
+                        (thumb_travel * first_task + max_first / 2) / max_first;
+
+    canvas_draw_line(
+        canvas,
+        126,
+        CODEX_TASK_SCROLL_TOP,
+        126,
+        CODEX_TASK_SCROLL_TOP + CODEX_TASK_SCROLL_HEIGHT - 1);
+    canvas_draw_box(canvas, 124, thumb_top, 3, thumb_height);
+}
+
 static void codex_monitor_draw_tasks_overview(
     Canvas* canvas,
     const CodexMonitorModel* model,
@@ -1198,27 +1224,34 @@ static void codex_monitor_draw_tasks_overview(
     }
 
     if(selected_task >= model->task_count) selected_task = model->task_count - 1;
-    uint8_t first = selected_task >= 3 ? selected_task - 2 : 0;
-    for(uint8_t row = 0; row < 3 && first + row < model->task_count; row++) {
+    uint8_t first =
+        selected_task >= CODEX_TASK_VISIBLE_ROWS ?
+            selected_task - (CODEX_TASK_VISIBLE_ROWS - 1) :
+            0;
+    bool show_scrollbar = model->task_count > CODEX_TASK_VISIBLE_ROWS;
+    for(uint8_t row = 0;
+        row < CODEX_TASK_VISIBLE_ROWS && first + row < model->task_count;
+        row++) {
         uint8_t index = first + row;
         const CodexTaskModel* task = &model->tasks[index];
         uint8_t row_top = 21 + row * 10;
         uint8_t y = row_top + 2;
         bool selected = index == selected_task;
         if(selected) {
-            canvas_draw_box(canvas, 0, row_top, 128, 10);
+            canvas_draw_box(canvas, 0, row_top, show_scrollbar ? 123 : 128, 10);
             canvas_set_color(canvas, ColorWhite);
         }
         codex_compact_draw(canvas, 2, y, AlignLeft, task->label);
         codex_compact_draw(canvas, 44, y, AlignLeft, codex_task_activity_name(task));
         codex_monitor_format_clock(model, task->started_at, text, sizeof(text));
-        codex_compact_draw(canvas, 126, y, AlignRight, text);
+        codex_compact_draw(canvas, show_scrollbar ? 121 : 126, y, AlignRight, text);
         if(selected) canvas_set_color(canvas, ColorBlack);
     }
+    codex_monitor_draw_task_scrollbar(canvas, model->task_count, first);
 
     canvas_draw_line(canvas, 0, 53, 127, 53);
     const CodexTaskModel* selected = &model->tasks[selected_task];
-    snprintf(text, sizeof(text), "TASK %u OF %u", selected->number, model->task_count);
+    snprintf(text, sizeof(text), "TASK %u OF %u", selected_task + 1, model->task_count);
     codex_compact_draw(canvas, 2, 57, AlignLeft, text);
     codex_compact_draw(
         canvas, 126, 57, AlignRight, selected->is_side ? "NO DETAILS" : "OK DETAILS");

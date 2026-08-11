@@ -6,6 +6,9 @@
   working or completed sessions.
 - The selected row uses a solid black background with white text. There is no
   arrow selector.
+- When more than three tasks exist, a slim right-edge scrollbar shows the
+  current three-row window within the full list. The footer uses the selected
+  row's current one-based position rather than its stable internal task number.
 - Each row uses a short thread-name label plus start time. Chinese thread names
   become pinyin initials; unnamed threads display `NO NAME`. Project-directory
   fallback is not used.

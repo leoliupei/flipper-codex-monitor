@@ -47,6 +47,60 @@ class HookPrivacyTests(unittest.TestCase):
         self.assertNotIn("prompt", event)
         self.assertNotIn("lastAssistantMessage", event)
 
+    def test_subagent_lifecycle_uses_private_agent_identity(self) -> None:
+        start = sanitize_event(
+            {
+                "hook_event_name": "SubagentStart",
+                "session_id": "parent-session",
+                "turn_id": "parent-turn",
+                "agent_id": "agent-1",
+                "agent_type": "explore",
+                "cwd": "/private/project",
+                "model": "private-model",
+            }
+        )
+        stop = sanitize_event(
+            {
+                "hook_event_name": "SubagentStop",
+                "session_id": "parent-session",
+                "turn_id": "parent-turn",
+                "agent_id": "agent-1",
+                "agent_type": "explore",
+                "agent_transcript_path": "/private/agent-transcript.jsonl",
+                "last_assistant_message": "secret response",
+            }
+        )
+
+        self.assertEqual(
+            start,
+            {
+                "event": "start",
+                "turnId": "agent-1",
+                "sessionId": "agent-1",
+                "isSide": True,
+            },
+        )
+        self.assertEqual(
+            stop,
+            {
+                "event": "stop",
+                "turnId": "agent-1",
+                "sessionId": "agent-1",
+                "isSide": True,
+            },
+        )
+
+    def test_subagent_without_agent_id_is_ignored(self) -> None:
+        self.assertIsNone(
+            sanitize_event(
+                {
+                    "hook_event_name": "SubagentStart",
+                    "session_id": "parent-session",
+                    "turn_id": "parent-turn",
+                }
+            )
+        )
+
     def test_unsupported_event_is_ignored(self) -> None:
         self.assertIsNone(sanitize_event({"hook_event_name": "PreToolUse"}))
 

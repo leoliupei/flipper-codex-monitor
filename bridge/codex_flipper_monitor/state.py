@@ -7,7 +7,6 @@ from .model import QuotaSnapshot, TokenUsageSnapshot, UsageSnapshot
 
 
 TASK_HISTORY_LIMIT = 16
-SIDE_TASK_TTL_SECONDS = 30
 
 
 class Activity(str, Enum):
@@ -181,35 +180,6 @@ class MonitorState:
                 key=lambda item: (item[1].updated_at, item[1].number),
             )
             self.tasks.pop(oldest_key, None)
-
-    def expire_stale_side_tasks(
-        self,
-        timestamp: Optional[int] = None,
-        ttl_seconds: int = SIDE_TASK_TTL_SECONDS,
-    ) -> bool:
-        wall_time = int(time.time()) if timestamp is None else int(timestamp)
-        cutoff = wall_time - max(1, int(ttl_seconds))
-        expired = [
-            (key, task)
-            for key, task in self.tasks.items()
-            if task.is_side
-            and task.activity is Activity.WORKING
-            and task.transcript_path is None
-            and task.token_usage is None
-            and task.updated_at <= cutoff
-        ]
-        if not expired:
-            return False
-        for key, task in expired:
-            self.tasks.pop(key, None)
-            self.active_turns.discard(task.turn_id)
-        if self.active_turns:
-            self.activity = Activity.WORKING
-        else:
-            self.activity = Activity.IDLE
-            self.state_changed_at = wall_time
-        self.done_until = None
-        return True
 
     def advance(
         self, now: Optional[float] = None, timestamp: Optional[int] = None

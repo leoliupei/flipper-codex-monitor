@@ -1,5 +1,7 @@
 # Flipper Codex Monitor
 
+English | [简体中文](README.zh-CN.md)
+
 [![CI](https://github.com/leoliupei/flipper-codex-monitor/actions/workflows/ci.yml/badge.svg)](https://github.com/leoliupei/flipper-codex-monitor/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -17,7 +19,7 @@ The project is pre-1.0. Its local Codex integration follows interfaces shipped
 with Codex, including App Server messages and Hook metadata, but those
 interfaces can change between Codex releases.
 
-The project has two parts:
+The project has two main parts plus a native helper:
 
 - `bridge/`: a macOS service that reads the local Codex App Server interface,
   receives privacy-minimized Codex Hook events, and sends compact updates over
@@ -46,7 +48,7 @@ paths are not forwarded.
 - Flipper Zero with a compatible FAP API
 - uFBT 0.2.6 for local FAP builds
 
-Version 0.9.18 is built against the official Flipper firmware 1.4.3 SDK, target
+Version 0.9.19 is built against the official Flipper firmware 1.4.3 SDK, target
 7, FAP API 87.1. It has also been tested on Momentum `mntm-012`, which exposes
 the same API. FAP compatibility is determined by the API metadata rather than
 the firmware brand.
@@ -97,7 +99,7 @@ python3 scripts/install_service.py \
   --ble-name DEVICE
 ```
 
-Finally preview and install the two privacy-minimized Codex Hooks:
+Finally preview and install the four privacy-minimized Codex Hooks:
 
 ```sh
 python3 scripts/install_hooks.py --dry-run
@@ -142,7 +144,8 @@ python3 -m pip install -r requirements-design.txt
 
 ## Status model
 
-- `WORKING`: at least one `UserPromptSubmit` turn is active.
+- `WORKING`: at least one `UserPromptSubmit` turn or side conversation is
+  active.
 - `DONE`: the last active turn completed, failed, or was manually stopped;
   displayed briefly. This global display state does not itself trigger a
   notification.
@@ -170,11 +173,13 @@ opening it.
 Codex Hook callbacks themselves contain more data than the monitor needs.
 Common callback fields include `session_id`, `transcript_path`, `cwd`, and
 `model`; `UserPromptSubmit` also includes `turn_id` and `prompt`, while `Stop`
-can include the assistant's final message. The Hook adapter deliberately
-allowlists only event type, local session/turn correlation, and transcript path
-for bridge-side processing. Raw prompt, reply, model, and working directory are
-discarded before the local socket, and only the derived seven-character label
-crosses to Flipper.
+can include the assistant's final message. `SubagentStart` and `SubagentStop`
+add a unique `agent_id`; the parent session ID is not sufficient to distinguish
+concurrent side conversations. The Hook adapter deliberately allowlists only
+event type, local task correlation, the root transcript path, and a side-task
+flag for bridge-side processing. Raw prompt, reply, model, working directory,
+agent type, and subagent transcript path are discarded before the local socket,
+and only the derived seven-character label crosses to Flipper.
 
 ## Screen
 
@@ -248,18 +253,19 @@ Tasks is a vertically scrollable list of the 16 most recently active working or
 completed local sessions; three rows fit on screen, but the list is not limited
 to those three visible rows. Rows sort only by latest activity. Each row shows a
 derived short label, full-word state, and local start time. The selected row
-uses a solid black background with white text and no arrow. Up and Down scroll,
-and OK opens the selected task. Completed entries have no time-based expiry;
+uses a solid black background with white text and no arrow. With more than
+three tasks, a slim right-edge scrollbar shows the current three-row window,
+and the footer reports the selected row's current one-based position. Up and
+Down scroll, and OK opens the selected task. Completed entries have no
+time-based expiry;
 the least recently active completed entry leaves only when a seventeenth task
 arrives. The sixteen-entry history is restored from the Mac-local mode-`0600`
 runtime state after service restarts. Temporary side conversations are shown as
-`SIDE`; they cannot be opened from the task list and are removed as soon as
-they finish. A `SIDE` entry with no transcript or token activity is discarded
-after 30 seconds if its end event never arrives, so it cannot leave the monitor
-stuck in `WORKING`. The footer shows `NO DETAILS` while a side conversation is
-selected, and detail-page task navigation skips side conversations. A detail
-page has two
-views: Live shows state, elapsed time, total and latest-call tokens, last-call
+`SIDE`; they cannot be opened from the task list, remain visible for their full
+lifetime, and are removed as soon as their `SubagentStop` event arrives. The
+footer shows `NO DETAILS` while a side conversation is selected, and detail-page
+task navigation skips side conversations. A detail page has two views: Live
+shows state, elapsed time, total and latest-call tokens, last-call
 context utilization, and update age written with the full `SECOND` or `SECONDS`
 unit; Tokens shows cumulative input, cached input, output, and reasoning-output
 counts. In detail, Up and Down switch tasks, OK toggles Live and Tokens, Left
@@ -301,7 +307,7 @@ xcrun swiftc -swift-version 5 -O \
 
 ## Uninstall
 
-Remove only the two Codex Hooks installed by this project, preserving all other
+Remove only the four Codex Hooks installed by this project, preserving all other
 Hook handlers:
 
 ```sh

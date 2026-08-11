@@ -193,33 +193,43 @@ class MonitorStateTests(unittest.TestCase):
         self.assertEqual(state.completion_sequence, 1)
         self.assertEqual(state.last_completed_at, 110)
 
-    def test_unobservable_side_task_expires_without_affecting_real_work(self) -> None:
+    def test_multiple_side_tasks_remain_distinct_until_each_stops(self) -> None:
         state = MonitorState()
         state.handle_hook(
             "start",
-            "real-turn",
-            session_id="real-session",
-            label="REAL",
+            "agent-a",
+            session_id="agent-a",
+            label="SIDE",
+            is_side=True,
             timestamp=100,
             now=0,
         )
         state.handle_hook(
             "start",
-            "side-turn",
-            session_id="side-session",
+            "agent-b",
+            session_id="agent-b",
             label="SIDE",
             is_side=True,
             timestamp=101,
             now=1,
         )
 
-        self.assertFalse(state.expire_stale_side_tasks(timestamp=130))
-        self.assertTrue(state.expire_stale_side_tasks(timestamp=131))
-        self.assertEqual([task.label for task in state.recent_tasks()], ["REAL"])
-        self.assertEqual(state.active_turns, {"real-turn"})
+        self.assertEqual(len(state.recent_tasks()), 2)
+        self.assertEqual(state.active_turns, {"agent-a", "agent-b"})
+        state.handle_hook(
+            "stop",
+            "agent-a",
+            session_id="agent-a",
+            timestamp=200,
+            now=100,
+        )
+        self.assertEqual(
+            [task.session_id for task in state.recent_tasks()], ["agent-b"]
+        )
+        self.assertEqual(state.active_turns, {"agent-b"})
         self.assertEqual(state.activity, Activity.WORKING)
 
-    def test_unobservable_side_task_expires_to_idle(self) -> None:
+    def test_active_side_task_does_not_expire_without_stop(self) -> None:
         state = MonitorState()
         state.handle_hook(
             "start",
@@ -231,10 +241,10 @@ class MonitorStateTests(unittest.TestCase):
             now=0,
         )
 
-        self.assertTrue(state.expire_stale_side_tasks(timestamp=130))
-        self.assertEqual(state.recent_tasks(), [])
-        self.assertEqual(state.active_turns, set())
-        self.assertEqual(state.activity, Activity.IDLE)
+        self.assertFalse(state.advance(now=3600, timestamp=3700))
+        self.assertEqual([task.label for task in state.recent_tasks()], ["SIDE"])
+        self.assertEqual(state.active_turns, {"side-turn"})
+        self.assertEqual(state.activity, Activity.WORKING)
 
 
 if __name__ == "__main__":

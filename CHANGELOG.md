@@ -5,6 +5,14 @@ Versioning while remaining pre-1.0.
 
 ## Unreleased
 
+## 0.9.19 - 2026-08-11
+
+- Track side conversations with the official `SubagentStart` and
+  `SubagentStop` lifecycle, preserving concurrent and long-running side tasks
+  until each one finishes.
+- Added a right-edge task-list scrollbar and a footer position indicator.
+- Added a Simplified Chinese README aligned with the current installation,
+  privacy, transport, and task behavior.
 - Aligned Codex App Server client metadata with the bridge release version and
   added regression coverage on Python 3.9 and 3.12.
 - Pinned the local Flipper SDK setup, documented first-run Hook reload and
