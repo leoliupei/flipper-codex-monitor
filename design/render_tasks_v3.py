@@ -26,14 +26,17 @@ def render_overview() -> Image.Image:
     )
     for index, (label, state, started) in enumerate(rows):
         y = 23 + index * 10
-        if index == 0:
-            draw.rectangle((0, y - 2, 127, y + 7), fill=0)
+        if index == 2:
+            draw.rectangle((0, y - 2, 122, y + 7), fill=0)
             color = 1
         else:
             color = 0
         draw_text(draw, (2, y), label, FONT_3X5, 3, color=color)
-        draw_text(draw, (55, y), state, FONT_3X5, 3, color=color)
-        draw_text(draw, (126, y), started, FONT_3X5, 3, anchor="right", color=color)
+        draw_text(draw, (44, y), state, FONT_3X5, 3, color=color)
+        draw_text(draw, (121, y), started, FONT_3X5, 3, anchor="right", color=color)
+
+    draw.line((126, 22, 126, 50), fill=0)
+    draw.rectangle((124, 35, 126, 46), fill=0)
 
     draw.line((0, 53, 127, 53), fill=0)
     draw_text(draw, (2, 57), "TASK 6 OF 7", FONT_3X5, 3)
